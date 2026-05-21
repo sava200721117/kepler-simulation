@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Симулятор законов Кеплера</title>
+    <style>
+        body {
+            margin: 0; padding: 15px; background-color: #0d1117; color: #c9d1d9;
+            font-family: sans-serif; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; min-height: 100vh; box-sizing: border-box;
+        }
+        h1 { font-size: 1.4rem; margin-bottom: 5px; color: #58a6ff; text-align: center; }
+        p { font-size: 0.9rem; margin: 0 0 15px 0; color: #8b949e; text-align: center; }
+        #canvas-container { background: #161b22; border: 2px solid #30363d; border-radius: 12px; overflow: hidden; }
+        canvas { display: block; }
+        .controls { margin-top: 15px; background: #161b22; padding: 15px; border-radius: 12px; border: 1px solid #30363d; width: 100%; max-width: 400px; box-sizing: border-box; }
+        .control-group { display: flex; flex-direction: column; margin-bottom: 12px; }
+        label { font-size: 0.85rem; margin-bottom: 5px; display: flex; justify-content: space-between; }
+        label span { color: #58a6ff; font-weight: bold; }
+        input[type="range"] { width: 100%; accent-color: #58a6ff; }
+        button { width: 100%; background-color: #238636; color: white; border: none; padding: 10px; font-size: 0.9rem; font-weight: bold; border-radius: 6px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Симулятор законов Кеплера</h1>
+    <p>Попробуйте менять эксцентриситет и следите за скоростью планеты</p>
+    <div id="canvas-container">
+        <canvas id="keplerCanvas" width="400" height="300"></canvas>
+    </div>
+    <div class="controls">
+        <div class="control-group">
+            <label>Эксцентриситет (вытянутость): <span id="eccValue">0.50</span></label>
+            <input type="range" id="eccentricity" min="0" max="0.85" step="0.05" value="0.50">
+        </div>
+        <div class="control-group">
+            <button id="playPauseBtn">Пауза</button>
+        </div>
+    </div>
+    <script>
+        const canvas = document.getElementById('keplerCanvas');
+        const ctx = canvas.getContext('2d');
+        const eccInput = document.getElementById('eccentricity');
+        const eccValue = document.getElementById('eccValue');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const cx = canvas.width / 2, cy = canvas.height / 2, a = 130;
+        let e = parseFloat(eccInput.value), isPaused = false, E = 0, dt = 0.03;
+        eccInput.addEventListener('input', (event) => { e = parseFloat(event.target.value); eccValue.textContent = e.toFixed(2); });
+        playPauseBtn.addEventListener('click', () => { isPaused = !isPaused; playPauseBtn.textContent = isPaused ? "Запустить" : "Пауза"; });
+        function animate() {
+            requestAnimationFrame(animate);
+            if (isPaused) return;
+            const b = a * Math.sqrt(1 - e * e), c = a * e;
+            E += dt / (1 - e * Math.cos(E));
+            const sunX = cx + c/2, sunY = cy, centerEllipseX = sunX - c;
+            const planetX = centerEllipseX + a * Math.cos(E), planetY = sunY + b * Math.sin(E);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = '#21262d'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(cx - 160, cy); ctx.lineTo(cx + 160, cy); ctx.moveTo(cx, cy - 120); ctx.lineTo(cx, cy + 120); ctx.stroke();
+            ctx.strokeStyle = '#58a6ff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(centerEllipseX, sunY, a, b, 0, 0, 2 * Math.PI); ctx.stroke();
+            ctx.strokeStyle = 'rgba(240, 139, 94, 0.4)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(sunX, sunY); ctx.lineTo(planetX, planetY); ctx.stroke();
+            ctx.fillStyle = '#f9826c'; ctx.beginPath(); ctx.arc(sunX, sunY, 10, 0, 2 * Math.PI); ctx.fill();
+            ctx.fillStyle = '#58a6ff'; ctx.beginPath(); ctx.arc(planetX, planetY, 6, 0, 2 * Math.PI); ctx.fill();
+            ctx.fillStyle = '#8b949e'; ctx.font = '10px sans-serif'; ctx.fillText("Перигелий (быстро)", centerEllipseX + a + 5, sunY - 10); ctx.fillText("Афелий (медленно)", centerEllipseX - a - 95, sunY - 10);
+        }
+        animate();
+    </script>
+</body>
+</html>
